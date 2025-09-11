@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import plotly.figure_factory as ff
 from dash import Dash, dcc, html, Input, Output
 import dash_bootstrap_components as dbc
-from sklearn.model_selection import train_test_split
+import joblib # Import joblib for loading models and data
 from sklearn.metrics import (
     classification_report,
     confusion_matrix,
@@ -15,58 +15,27 @@ from sklearn.metrics import (
     f1_score,
     roc_auc_score,
 )
-from imblearn.over_sampling import SMOTE
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestClassifier
-from xgboost import XGBClassifier
 
-# --- Data Loading and Preprocessing ---
-def preprocess_data(data_path):
-    """
-    Loads, cleans, and preprocesses the Banksim dataset for model training.
-    """
-    data = pd.read_csv(data_path)
+# --- Data Loading (Load pre-trained models and data) ---
 
-    # Dropping columns with only one unique value
-    data_reduced = data.drop(['zipcodeOri', 'zipMerchant'], axis=1)
+# Load the necessary data and models saved from your training script
+try:
+    data = pd.read_csv('bs140513_032310.csv')
+    X_test = joblib.load('data/X_test.pkl')
+    y_test = joblib.load('data/y_test.pkl')
+    # Load all trained models
+    model_results = {
+        'K-Neighbors Classifier': joblib.load('models/K-Neighbors_Classifier.pkl'),
+        'Random Forest Classifier': joblib.load('models/Random_Forest_Classifier.pkl'),
+        'XGBoost Classifier': joblib.load('models/XGBoost_Classifier.pkl'),
+    }
+except FileNotFoundError:
+    print("Model or data files not found. Please run the training script first.")
+    # Exit or handle gracefully if files are not present
+    exit()
 
-    # Convert object columns to categorical and then to numeric codes
-    col_categorical = data_reduced.select_dtypes(include=['object']).columns
-    for col in col_categorical:
-        data_reduced[col] = data_reduced[col].astype('category')
-    data_reduced[col_categorical] = data_reduced[col_categorical].apply(lambda x: x.cat.codes)
-
-    # Define features and target variable
-    X = data_reduced.drop(['fraud'], axis=1)
-    y = data_reduced['fraud']
-
-    # Handle class imbalance with SMOTE
-    sm = SMOTE(random_state=42)
-    X_res, y_res = sm.fit_resample(X, y)
-
-    # Split the resampled data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_res, y_res, test_size=0.3, random_state=42, stratify=y_res
-    )
-
-    return X, y, X_train, X_test, y_train, y_test
-
-# Load and preprocess the data
-X, y, X_train, X_test, y_train, y_test = preprocess_data('bs140513_032310.csv')
-data = pd.read_csv('bs140513_032310.csv')
-
-# --- Model Training ---
-models = {
-    'K-Neighbors Classifier': KNeighborsClassifier(n_neighbors=5, p=1),
-    'Random Forest Classifier': RandomForestClassifier(n_estimators=100, max_depth=8, random_state=42, class_weight="balanced"),
-    'XGBoost Classifier': XGBClassifier(max_depth=6, learning_rate=0.05, n_estimators=400, objective="binary:hinge", random_state=42),
-}
-
-# Train all models and store results
-model_results = {}
-for name, model in models.items():
-    model.fit(X_train, y_train.values.ravel())
-    model_results[name] = model
+# Extract original data counts for display purposes
+y = data['fraud']
 
 # --- Dashboard Layout ---
 app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
@@ -134,7 +103,7 @@ prepare_tab = html.Div(
                             dbc.CardBody(
                                 [
                                     html.P([
-                                        "As is typical with fraud data, the dataset is highly ", 
+                                        "As is typical with fraud data, the dataset is highly ",
                                         html.B("imbalanced"),
                                         ". Only a tiny fraction of all transactions are fraudulent."
                                     ]),
@@ -182,13 +151,15 @@ analyze_tab = html.Div(
                         ),
                         dbc.Row([
                             dbc.Col(dcc.Graph(id="amount-boxplot")),
-                            dbc.Col(dcc.Graph(id="amount-histogram")),
                         ]),
                         html.P([
                             html.B("Box Plot Insight:"),
                             " The box plot shows the distribution of transaction amounts across different purchase categories. While most categories have a similar amount range, the ",
                             html.B("'es_travel'"),
                             " category stands out with extremely high transaction amounts. This suggests that fraudsters target categories where high-value transactions are common, making their activity less suspicious."
+                        ]),
+                        dbc.Row([
+                            dbc.Col(dcc.Graph(id="amount-histogram")),
                         ]),
                         html.P([
                             html.B("Histogram Insight:"),
@@ -484,10 +455,10 @@ def update_feature_importance(selected_model):
     model = model_results.get(selected_model)
     
     if hasattr(model, 'feature_importances_'):
+        feature_columns = X_test.columns
         importances = model.feature_importances_
-        feature_names = X_train.columns
         df_importance = pd.DataFrame({
-            'feature': feature_names,
+            'feature': feature_columns,
             'importance': importances
         }).sort_values(by='importance', ascending=False)
         
