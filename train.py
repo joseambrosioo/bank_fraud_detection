@@ -23,7 +23,7 @@ def preprocess_data(data_path):
     )
     return X_train, X_test, y_train, y_test, X.columns
 
-X_train, X_test, y_train, y_test, feature_columns = preprocess_data('bs140513_032310.csv')
+X_train, X_test, y_train, y_test, feature_columns = preprocess_data('dataset/bs140513_032310.csv')
 
 models_to_train = {
     'K-Neighbors Classifier': KNeighborsClassifier(n_neighbors=5, p=1),

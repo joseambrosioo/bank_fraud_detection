@@ -20,7 +20,7 @@ from sklearn.metrics import (
 
 # Load the necessary data and models saved from your training script
 try:
-    data = pd.read_csv('bs140513_032310.csv')
+    data = pd.read_csv('dataset/bs140513_032310.csv')
     X_test = joblib.load('data/X_test.pkl')
     y_test = joblib.load('data/y_test.pkl')
     # Load all trained models
