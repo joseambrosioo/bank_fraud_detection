@@ -76,9 +76,12 @@ ask_tab = dcc.Markdown(
 prepare_tab = html.Div(
     children=[
         html.H4(["📝 ", html.B("PREPARE"), " — Getting the Data Ready"], className="mt-4"),
-        html.P("Before we can build a predictive model, we need to understand and prepare our data."),
         html.H5("Data Source"),
-        html.P("We are using the **Banksim dataset**, a synthetically generated dataset that simulates bank payments. It contains almost 600,000 transactions with various features."),
+        html.P([
+            "We are using the ",
+            html.B("Banksim dataset"),
+            ", a synthetically generated dataset that simulates bank payments. It contains almost 600,000 transactions with various features."
+        ]),
         dbc.Row(
             [
                 dbc.Col(
@@ -179,10 +182,45 @@ analyze_tab = html.Div(
                             html.B("'es_travel'"),
                             " have the highest fraud rates, reinforcing the idea that fraudsters target high-value, discretionary spending categories."
                         ]),
+                        # New Markdown block for detailed category descriptions
+                        dcc.Markdown(
+                            """
+                            ### Breakdown by Category
+                            - **es_leisure**: Represents transactions for recreational activities, such as entertainment, hobbies, or luxury goods. This category shows a high fraud rate, as these high-value, non-essential purchases are often targeted by fraudsters.
+                            - **es_travel**: Transactions related to travel, including flights, hotels, and transportation. This category also has a high fraud rate, likely due to the large ticket sizes, which are attractive to fraudsters.
+                            - **es_health**: Transactions for medical or health-related services and products.
+                            - **es_hotelservices**: Transactions for hotel stays and related services.
+                            - **es_barsandrestaurants**: Payments made at bars and restaurants.
+                            - **es_transportation**: Transactions for transportation, such as bus or train tickets.
+                            - **es_sportsandoutdoors**: Purchases of sports equipment or outdoor goods.
+                            - **es_contents**: Transactions for digital content or media.
+                            - **es_fashion**: Purchases of clothing and accessories.
+                            - **es_tech**: Transactions for electronics and technology.
+                            - **es_home**: Purchases related to home goods and services.
+                            - **es_shopping_net**: Online shopping transactions.
+                            - **es_others**: A catch-all for transactions that do not fit into other categories.
+                            - **es_food**: Transactions for groceries or food items.
+                            - **es_service**: Transactions for general services.
+                            - **es_shopping**: In-person shopping transactions.
+                            """, className="p-4"
+                        ),
                         html.P([
                             html.B("Age Fraud Insight:"),
                             " Interestingly, the age group under 18 (category '0') has the highest fraud percentage. This could be due to a number of reasons, such as younger individuals being more susceptible to identity theft or fraudsters intentionally using younger age profiles."
                         ]),
+                        # New Markdown block for detailed age group descriptions
+                        dcc.Markdown(
+                            """
+                            ### Breakdown by Age Group
+                            - **Age Group 0**: Under 18. This group shows the highest fraud rate, which may be a result of less secure online behavior or the use of stolen credentials on accounts with less rigorous security measures.
+                            - **Age Group 1**: 18-25 years old.
+                            - **Age Group 2**: 26-35 years old.
+                            - **Age Group 3**: 36-45 years old.
+                            - **Age Group 4**: 46-55 years old.
+                            - **Age Group 5**: 56-65 years old.
+                            - **Age Group 6**: Over 65 years old.
+                            """, className="p-4"
+                        ),
                     ], className="p-4"
                 )
             ]),
@@ -261,10 +299,10 @@ act_tab = dcc.Markdown(
 
     This is the most important section, as it translates our data insights into a business strategy.
 
-    -   **Deploy the Best Model**: The **XGBoost Classifier** is our recommended model for deployment due to its superior performance on the test data. This model will be the brain behind our new, proactive fraud-detection system.
-    -   **Real-Time Alerts**: The deployed model should be used to provide real-time risk scores for every transaction. Any transaction with a high fraud score can be automatically flagged for review or instantly declined.
-    -   **Targeted Rule Creation**: Our analysis revealed that fraudulent transactions are often tied to specific **categories (like 'es_leisure' and 'es_travel')** and have **high amounts**. These insights can be used to create additional, more specific business rules that work in tandem with the machine learning model, creating a more robust defense against fraud.
-    -   **Continuous Improvement**: The model's performance should be monitored over time. As new fraud patterns emerge, the model should be re-trained on fresh data to ensure it remains effective.
+    -   **Deploy the Best Model**: The **XGBoost Classifier** is our recommended model for deployment due to its superior performance on the test data. This model will be the brain behind our new, proactive fraud-detection system.
+    -   **Real-Time Alerts**: The deployed model should be used to provide real-time risk scores for every transaction. Any transaction with a high fraud score can be automatically flagged for review or instantly declined.
+    -   **Targeted Rule Creation**: Our analysis revealed that fraudulent transactions are often tied to specific **categories (like 'es_leisure' and 'es_travel')** and have **high amounts**. These insights can be used to create additional, more specific business rules that work in tandem with the machine learning model, creating a more robust defense against fraud.
+    -   **Continuous Improvement**: The model's performance should be monitored over time. As new fraud patterns emerge, the model should be re-trained on fresh data to ensure it remains effective.
     """, className="p-4"
 )
 
