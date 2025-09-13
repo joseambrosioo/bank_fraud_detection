@@ -139,8 +139,14 @@ prepare_tab = html.Div(
         html.H5("Dataset Sample (First 10 Rows)"),
         dash_table.DataTable(
             id='table',
-            columns=[{"name": i, "id": i} for i in data.columns],
+            columns=[
+                {"name": i, "id": i, "type": "numeric" if i in ['step', 'amount', 'fraud'] else "text"} 
+                for i in data.columns
+            ],
             data=data.head(10).to_dict('records'),
+            sort_action="native",
+            filter_action="native",
+            page_action="none",
             style_table={'overflowX': 'auto', 'width': '100%'},
             style_header={
                 'backgroundColor': 'rgb(230, 230, 230)',
@@ -155,9 +161,6 @@ prepare_tab = html.Div(
                 'overflow': 'hidden',
                 'textOverflow': 'ellipsis',
             },
-            sort_action="native",
-            filter_action="native",
-            page_action="none",
         ),
     ], className="p-4"
 )
