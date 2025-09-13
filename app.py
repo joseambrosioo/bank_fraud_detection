@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 import plotly.figure_factory as ff
 from dash import Dash, dcc, html, Input, Output
 import dash_bootstrap_components as dbc
+import dash_table # Import dash_table for displaying data
 import joblib # Import joblib for loading models and data
 from sklearn.metrics import (
     classification_report,
@@ -76,12 +77,9 @@ ask_tab = dcc.Markdown(
 prepare_tab = html.Div(
     children=[
         html.H4(["📝 ", html.B("PREPARE"), " — Getting the Data Ready"], className="mt-4"),
+        html.P("Before we can build a predictive model, we need to understand and prepare our data."),
         html.H5("Data Source"),
-        html.P([
-            "We are using the ",
-            html.B("Banksim dataset"),
-            ", a synthetically generated dataset that simulates bank payments. It contains almost 600,000 transactions with various features."
-        ]),
+        html.P("We are using the **Banksim dataset**, a synthetically generated dataset that simulates bank payments. It contains almost 600,000 transactions with various features."),
         dbc.Row(
             [
                 dbc.Col(
@@ -134,6 +132,22 @@ prepare_tab = html.Div(
             - **Fraud**: Our target variable. 1 means fraudulent, 0 means not fraudulent.
             """, className="p-4"
         ),
+        html.H5("Dataset Sample (First 10 Rows)"),
+        dash_table.DataTable(
+            id='table',
+            columns=[{"name": i, "id": i} for i in data.columns],
+            data=data.head(10).to_dict('records'),
+            style_table={'overflowX': 'auto'},
+            style_header={
+                'backgroundColor': 'rgb(230, 230, 230)',
+                'fontWeight': 'bold'
+            },
+            style_cell={
+                'textAlign': 'left',
+                'minWidth': '100px', 'width': '150px', 'maxWidth': '200px',
+                'whiteSpace': 'normal'
+            },
+        ),
     ], className="p-4"
 )
 
@@ -182,10 +196,9 @@ analyze_tab = html.Div(
                             html.B("'es_travel'"),
                             " have the highest fraud rates, reinforcing the idea that fraudsters target high-value, discretionary spending categories."
                         ]),
-                        # New Markdown block for detailed category descriptions
+                        html.H5("Breakdown by Category"),
                         dcc.Markdown(
                             """
-                            ### Breakdown by Category
                             - **es_leisure**: Represents transactions for recreational activities, such as entertainment, hobbies, or luxury goods. This category shows a high fraud rate, as these high-value, non-essential purchases are often targeted by fraudsters.
                             - **es_travel**: Transactions related to travel, including flights, hotels, and transportation. This category also has a high fraud rate, likely due to the large ticket sizes, which are attractive to fraudsters.
                             - **es_health**: Transactions for medical or health-related services and products.
@@ -208,10 +221,9 @@ analyze_tab = html.Div(
                             html.B("Age Fraud Insight:"),
                             " Interestingly, the age group under 18 (category '0') has the highest fraud percentage. This could be due to a number of reasons, such as younger individuals being more susceptible to identity theft or fraudsters intentionally using younger age profiles."
                         ]),
-                        # New Markdown block for detailed age group descriptions
+                        html.H5("Breakdown by Age Group"),
                         dcc.Markdown(
                             """
-                            ### Breakdown by Age Group
                             - **Age Group 0**: Under 18. This group shows the highest fraud rate, which may be a result of less secure online behavior or the use of stolen credentials on accounts with less rigorous security measures.
                             - **Age Group 1**: 18-25 years old.
                             - **Age Group 2**: 26-35 years old.
