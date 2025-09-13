@@ -79,7 +79,11 @@ prepare_tab = html.Div(
         html.H4(["📝 ", html.B("PREPARE"), " — Getting the Data Ready"], className="mt-4"),
         html.P("Before we can build a predictive model, we need to understand and prepare our data."),
         html.H5("Data Source"),
-        html.P("We are using the **Banksim dataset**, a synthetically generated dataset that simulates bank payments. It contains almost 600,000 transactions with various features."),
+        html.P([
+            "We are using the ",
+            html.B("Banksim dataset"),
+            ", a synthetically generated dataset that simulates bank payments. It contains almost 600,000 transactions with various features."
+        ]),
         dbc.Row(
             [
                 dbc.Col(
