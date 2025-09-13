@@ -137,16 +137,23 @@ prepare_tab = html.Div(
             id='table',
             columns=[{"name": i, "id": i} for i in data.columns],
             data=data.head(10).to_dict('records'),
-            style_table={'overflowX': 'auto'},
+            style_table={'overflowX': 'auto', 'width': '100%'},
             style_header={
                 'backgroundColor': 'rgb(230, 230, 230)',
-                'fontWeight': 'bold'
+                'fontWeight': 'bold',
+                'textAlign': 'center',
             },
             style_cell={
                 'textAlign': 'left',
-                'minWidth': '100px', 'width': '150px', 'maxWidth': '200px',
-                'whiteSpace': 'normal'
+                'padding': '5px',
+                'font-size': '12px',
+                'minWidth': '80px', 'width': 'auto', 'maxWidth': '150px',
+                'overflow': 'hidden',
+                'textOverflow': 'ellipsis',
             },
+            sort_action="native",
+            filter_action="native",
+            page_action="none",
         ),
     ], className="p-4"
 )
