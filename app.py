@@ -264,31 +264,16 @@ analyze_tab = html.Div(
                             html.B("XGBoost"),
                             ". These models are evaluated on a separate 'test' set to ensure they are not just memorizing the training data."
                         ]),
-                        html.P([
-                            "For this imbalanced dataset, simple ",
-                            html.B("Accuracy"),
-                            " isn't enough. We must look at more robust metrics:",
+                        html.P(
+                            ["To truly evaluate our fraud detection models, we focus on several key metrics beyond simple accuracy:",
                             html.Ul([
-                                html.Li([
-                                    html.B("Precision:"),
-                                    " Of all the transactions our model flagged as fraudulent, how many were actually fraudulent? High precision means fewer false alarms."
-                                ]),
-                                html.Li([
-                                    html.B("Recall:"),
-                                    " Of all the ",
-                                    html.I("actual"),
-                                    " fraudulent transactions, how many did our model successfully catch? High recall means fewer missed frauds."
-                                ]),
-                                html.Li([
-                                    html.B("F1-Score:"),
-                                    " A balance between precision and recall."
-                                ]),
-                                html.Li([
-                                    html.B("ROC-AUC:"),
-                                    " Measures the model's ability to distinguish between fraud and non-fraud classes. The closer to 1.0, the better."
-                                ]),
+                                html.Li([html.B("Precision:"), " Think of Precision as the cost of a false alarm. If our model flags a transaction as fraudulent, high precision means it's very likely to actually be fraudulent. Of all the transactions our model flagged, how many were truly fraudulent? High precision is good to reduce unnecessary investigations."]),
+                                html.Li([html.B("Recall:"), " Think of Recall as the cost of a missed fraud. High recall means our model catches most of the actual fraudulent transactions, so we don’t let fraud slip through undetected. Of all fraudulent transactions, how many did our model successfully identify? High recall is crucial to prevent financial losses."]),
+                                html.Li([html.B("F1-Score:"), " This is a balance between precision and recall, providing a single metric to compare models. It's the harmonic mean of precision and recall, summarizing both false alarms and missed frauds in one number."]),
+                                html.Li([html.B("ROC-AUC:"), " This is a powerful summary metric that measures the model's ability to distinguish between fraudulent and non-fraudulent transactions. A score closer to 1.0 indicates that the model can reliably separate the two classes, making it highly effective for decision-making."])
                             ])
-                        ]),
+                            ]
+                        ),
                         dbc.Row([
                             dbc.Col(dcc.Graph(id="model-metrics-bar"), md=12),
                         ]),
@@ -310,6 +295,9 @@ analyze_tab = html.Div(
                              ])
                             ]
                         ),
+                        html.P([
+                            "To provide a more granular view of each model's performance, we can look at the **confusion matrix** results. The **XGBoost Classifier** had **25,190 true positives (TP)** and **25,486 true negatives (TN)**, while only misclassifying **270 transactions as false positives (FP)** and **114 as false negatives (FN)**. The **K-Neighbors Classifier** had **25,324 true positives (TP)** and **25,123 true negatives (TN)**, with **633 false positives (FP)** and **97 false negatives (FN)**. Lastly, the **Random Forest Classifier** correctly identified **25,423 true positives (TP)** and **24,845 true negatives (TN)**, with **899 false positives (FP)** and **104 false negatives (FN)**. These numbers underscore the excellent balance each model achieves between catching fraud and avoiding false alarms."
+                        ]),
                         dbc.Row([
                             dbc.Col(dcc.Graph(id="confusion-matrix"), md=6),
                             dbc.Col(dcc.Graph(id="roc-curve"), md=6),
