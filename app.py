@@ -17,9 +17,7 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-# --- Data Loading (Load pre-trained models and data) ---
-
-# Load the necessary data and models saved from your training script
+# --- Data Loading (Load all data and models ONCE at startup) ---
 try:
     data = pd.read_csv('dataset/bs140513_032310.csv')
     X_test_raw = joblib.load('data/X_test.pkl')
@@ -27,7 +25,7 @@ try:
     feature_columns = joblib.load('data/feature_columns.pkl')
     X_test = pd.DataFrame(X_test_raw, columns=feature_columns)
     
-    # Load all trained models to populate the dropdown
+    # LOAD ALL MODELS AND STORE IN MEMORY
     model_results = {
         'K-Neighbors Classifier': joblib.load('models/K-Neighbors_Classifier.pkl'),
         'Random Forest Classifier': joblib.load('models/Random_Forest_Classifier.pkl'),
@@ -35,10 +33,8 @@ try:
     }
 except FileNotFoundError as e:
     print(f"Model or data files not found. Please run the training script first. Error: {e}")
-    # Exit or handle gracefully if files are not present
     exit()
 
-# Extract original data counts for display purposes
 y = data['fraud']
 
 # --- Dashboard Layout ---
@@ -288,7 +284,23 @@ analyze_tab = html.Div(
                             ". The ", html.B("Random Forest Classifier"), " had a lower but still strong performance, with a ", html.B("Precision of 0.97"), ", a ", html.B("Recall of 0.99"), ", an ", html.B("F1-Score of 0.98"), ", and a ", html.B("ROC-AUC of 0.99"), ". The superior performance of XGBoost on all metrics makes it the most reliable model for this critical task."
                         ]),
                         html.P([
-                            "To provide a more granular view of each model's performance, we can look at the **confusion matrix** results. The **XGBoost Classifier** had **25,190 true positives (TP)** and **25,486 true negatives (TN)**, while only misclassifying **270 transactions as false positives (FP)** and **114 as false negatives (FN)**. The **K-Neighbors Classifier** had **25,324 true positives (TP)** and **25,123 true negatives (TN)**, with **633 false positives (FP)** and **97 false negatives (FN)**. Lastly, the **Random Forest Classifier** correctly identified **25,423 true positives (TP)** and **24,845 true negatives (TN)**, with **899 false positives (FP)** and **104 false negatives (FN)**. These numbers underscore the excellent balance each model achieves between catching fraud and avoiding false alarms."
+                            "To provide a more granular view of each model's performance, we can look at the ",
+                            html.B("confusion matrix"), " results. The ",
+                            html.B("XGBoost Classifier"), " had ",
+                            html.B("173,997 true positives (TP)"), " and ",
+                            html.B("175,490 true negatives (TN)"), ", while only misclassifying ",
+                            html.B("2236 transactions as false positives (FP)"), " and ",
+                            html.B("743 as false negatives (FN)"), ". The ",
+                            html.B("K-Neighbors Classifier"), " had ",
+                            html.B("175,871 true positives (TP)"), " and ",
+                            html.B("171,999 true negatives (TN)"), ", with ",
+                            html.B("4234 false positives (FP)"), " and ",
+                            html.B("362 false negatives (FN)"), ". Lastly, the ",
+                            html.B("Random Forest Classifier"), " correctly identified ",
+                            html.B("175,154 true positives (TP)"), " and ",
+                            html.B("170,106 true negatives (TN)"), ", with ",
+                            html.B("6127 false positives (FP)"), " and ",
+                            html.B("1079 false negatives (FN)"), ". These numbers underscore the excellent balance each model achieves between catching fraud and avoiding false alarms."
                         ]),
                         html.H6("Confusion Matrix & ROC Curve", className="mt-4"),
                         html.P("Select a model to view its specific confusion matrix and ROC curve:"),
@@ -466,10 +478,7 @@ def update_age_fraud_bar(dummy):
 def update_model_metrics_bar(dummy):
     # Model Metrics Bar Chart
     df_rows = []
-    for name in model_results.keys():
-        model_path = f"models/{name.replace(' ', '_')}.pkl"
-        model = joblib.load(model_path)
-
+    for name, model in model_results.items():
         predictions = model.predict(X_test)
         
         if hasattr(model, 'predict_proba'):
@@ -509,9 +518,8 @@ def update_model_metrics_bar(dummy):
     Input('model-selector-dropdown', 'value')
 )
 def update_confusion_matrix_roc(selected_model):
-    # Dynamically load the correct model file
-    model_path = f"models/{selected_model.replace(' ', '_')}.pkl"
-    model = joblib.load(model_path)
+    # Retrieve the model from memory, not from disk
+    model = model_results[selected_model]
 
     # Confusion Matrix
     y_pred = model.predict(X_test)
@@ -559,8 +567,7 @@ def update_confusion_matrix_roc(selected_model):
     Input("feature-importance-model-dropdown", "value")
 )
 def update_feature_importance(selected_model):
-    model_path = f"models/{selected_model.replace(' ', '_')}.pkl"
-    model = joblib.load(model_path)
+    model = model_results[selected_model]
     
     if hasattr(model, 'feature_importances_'):
         feature_columns = X_test.columns
