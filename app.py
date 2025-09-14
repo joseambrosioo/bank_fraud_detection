@@ -4,8 +4,8 @@ import plotly.graph_objects as go
 import plotly.figure_factory as ff
 from dash import Dash, dcc, html, Input, Output
 import dash_bootstrap_components as dbc
-import dash_table # Import dash_table for displaying data
-import joblib # Import joblib for loading models and data
+import dash_table
+import joblib
 from sklearn.metrics import (
     classification_report,
     confusion_matrix,
@@ -22,16 +22,19 @@ from sklearn.metrics import (
 # Load the necessary data and models saved from your training script
 try:
     data = pd.read_csv('dataset/bs140513_032310.csv')
-    X_test = joblib.load('data/X_test.pkl')
+    X_test_raw = joblib.load('data/X_test.pkl')
     y_test = joblib.load('data/y_test.pkl')
-    # Load all trained models
+    feature_columns = joblib.load('data/feature_columns.pkl')
+    X_test = pd.DataFrame(X_test_raw, columns=feature_columns)
+    
+    # Load all trained models to populate the dropdown
     model_results = {
         'K-Neighbors Classifier': joblib.load('models/K-Neighbors_Classifier.pkl'),
         'Random Forest Classifier': joblib.load('models/Random_Forest_Classifier.pkl'),
         'XGBoost Classifier': joblib.load('models/XGBoost_Classifier.pkl'),
     }
-except FileNotFoundError:
-    print("Model or data files not found. Please run the training script first.")
+except FileNotFoundError as e:
+    print(f"Model or data files not found. Please run the training script first. Error: {e}")
     # Exit or handle gracefully if files are not present
     exit()
 
@@ -282,22 +285,20 @@ analyze_tab = html.Div(
                         html.P([
                             "Our analysis shows that the ", html.B("XGBoost Classifier"), " performed the best, achieving a ", html.B("Precision of 0.99"), " a ", html.B("Recall of 0.99"), " an ", html.B("F1-Score of 0.99"), " and a ", html.B("ROC-AUC of 0.99"), 
                             ". This demonstrates its superior ability to accurately identify fraudulent transactions with very few false negatives or false positives. The ", html.B("K-Neighbors Classifier"), " also performed exceptionally well, with a ", html.B("Precision of 0.98"), ", a ", html.B("Recall of 0.99"), ", an ", html.B("F1-Score of 0.99"), ", and a ", html.B("ROC-AUC of 0.99"), 
-                            ". The ", html.B("Random Forest Classifier"), " had a lower but still strong performance, with a  ", html.B("Precision of 0.97"), ", a  ", html.B("Recall of 0.99"), ", an ", html.B("F1-Score of 0.98"), ", and a ", html.B("ROC-AUC of 0.99"), ". The superior performance of XGBoost on all metrics makes it the most reliable model for this critical task."
+                            ". The ", html.B("Random Forest Classifier"), " had a lower but still strong performance, with a ", html.B("Precision of 0.97"), ", a ", html.B("Recall of 0.99"), ", an ", html.B("F1-Score of 0.98"), ", and a ", html.B("ROC-AUC of 0.99"), ". The superior performance of XGBoost on all metrics makes it the most reliable model for this critical task."
                         ]),
-                        html.H6("Confusion Matrix", className="mt-4"),
-                        html.P(
-                            ["The confusion matrix is a table that breaks down our model's predictions into four categories:", 
-                             html.Ul([
-                                 html.Li([html.B("True Positives (TP):"), " Correctly predicted fraudulent transactions."]),
-                                 html.Li([html.B("True Negatives (TN):"), " Correctly predicted non-fraudulent transactions."]),
-                                 html.Li([html.B("False Positives (FP):"), " Incorrectly predicted fraudulent transactions (Type I error). These are the 'false alarms' that can inconvenience customers."]),
-                                 html.Li([html.B("False Negatives (FN):"), " Incorrectly predicted non-fraudulent transactions (Type II error). These are the 'missed frauds' that result in financial losses for the bank."])
-                             ])
-                            ]
-                        ),
                         html.P([
                             "To provide a more granular view of each model's performance, we can look at the **confusion matrix** results. The **XGBoost Classifier** had **25,190 true positives (TP)** and **25,486 true negatives (TN)**, while only misclassifying **270 transactions as false positives (FP)** and **114 as false negatives (FN)**. The **K-Neighbors Classifier** had **25,324 true positives (TP)** and **25,123 true negatives (TN)**, with **633 false positives (FP)** and **97 false negatives (FN)**. Lastly, the **Random Forest Classifier** correctly identified **25,423 true positives (TP)** and **24,845 true negatives (TN)**, with **899 false positives (FP)** and **104 false negatives (FN)**. These numbers underscore the excellent balance each model achieves between catching fraud and avoiding false alarms."
                         ]),
+                        html.H6("Confusion Matrix & ROC Curve", className="mt-4"),
+                        html.P("Select a model to view its specific confusion matrix and ROC curve:"),
+                        dcc.Dropdown(
+                            id='model-selector-dropdown',
+                            options=[{'label': i, 'value': i} for i in model_results.keys()],
+                            value='XGBoost Classifier',
+                            clearable=False,
+                            style={'width': '50%', 'margin-bottom': '20px'}
+                        ),
                         dbc.Row([
                             dbc.Col(dcc.Graph(id="confusion-matrix"), md=6),
                             dbc.Col(dcc.Graph(id="roc-curve"), md=6),
@@ -332,7 +333,7 @@ analyze_tab = html.Div(
                             ],
                             value='XGBoost Classifier'
                         ),
-                        dcc.Graph(id="feature-importance-plot"),                        
+                        dcc.Graph(id="feature-importance-plot"),
                     ], className="p-4"
                 )
             ]),
@@ -347,10 +348,10 @@ act_tab = dcc.Markdown(
 
     This is the most important section, as it translates our data insights into a business strategy.
 
-    -   **Deploy the Best Model**: The **XGBoost Classifier** is our recommended model for deployment due to its superior performance on the test data. This model will be the brain behind our new, proactive fraud-detection system.
-    -   **Real-Time Alerts**: The deployed model should be used to provide real-time risk scores for every transaction. Any transaction with a high fraud score can be automatically flagged for review or instantly declined.
-    -   **Targeted Rule Creation**: Our analysis revealed that fraudulent transactions are often tied to specific **categories (like 'es_leisure' and 'es_travel')** and have **high amounts**. These insights can be used to create additional, more specific business rules that work in tandem with the machine learning model, creating a more robust defense against fraud.
-    -   **Continuous Improvement**: The model's performance should be monitored over time. As new fraud patterns emerge, the model should be re-trained on fresh data to ensure it remains effective.
+    -   **Deploy the Best Model**: The **XGBoost Classifier** is our recommended model for deployment due to its superior performance on the test data. This model will be the brain behind our new, proactive fraud-detection system.
+    -   **Real-Time Alerts**: The deployed model should be used to provide real-time risk scores for every transaction. Any transaction with a high fraud score can be automatically flagged for review or instantly declined.
+    -   **Targeted Rule Creation**: Our analysis revealed that fraudulent transactions are often tied to specific **categories (like 'es_leisure' and 'es_travel')** and have **high amounts**. These insights can be used to create additional, more specific business rules that work in tandem with the machine learning model, creating a more robust defense against fraud.
+    -   **Continuous Improvement**: The model's performance should be monitored over time. As new fraud patterns emerge, the model should be re-trained on fresh data to ensure it remains effective.
     """, className="p-4"
 )
 
@@ -458,18 +459,24 @@ def update_age_fraud_bar(dummy):
 
 @app.callback(
     Output("model-metrics-bar", "figure"),
-    Output("confusion-matrix", "figure"),
-    Output("roc-curve", "figure"),
-    Input('feature-importance-model-dropdown', 'value')
+    # The Input for this callback is not needed as it's static on load.
+    # We use a dummy input to ensure it runs on startup.
+    Input('age-fraud-bar', 'id')
 )
-def update_model_performance_graphs(selected_model):
-    
+def update_model_metrics_bar(dummy):
     # Model Metrics Bar Chart
     df_rows = []
-    for name, model in model_results.items():
+    for name in model_results.keys():
+        model_path = f"models/{name.replace(' ', '_')}.pkl"
+        model = joblib.load(model_path)
+
         predictions = model.predict(X_test)
-        probabilities = model.predict_proba(X_test)[:, 1]
         
+        if hasattr(model, 'predict_proba'):
+            probabilities = model.predict_proba(X_test)[:, 1]
+        else:
+            probabilities = model.decision_function(X_test)
+
         df_rows.append({
             'Model': name,
             'Precision': precision_score(y_test, predictions, zero_division=0),
@@ -494,13 +501,25 @@ def update_model_performance_graphs(selected_model):
         margin=dict(l=150, r=20, t=50, b=20),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
+    return metrics_bar
+
+@app.callback(
+    Output("confusion-matrix", "figure"),
+    Output("roc-curve", "figure"),
+    Input('model-selector-dropdown', 'value')
+)
+def update_confusion_matrix_roc(selected_model):
+    # Dynamically load the correct model file
+    model_path = f"models/{selected_model.replace(' ', '_')}.pkl"
+    model = joblib.load(model_path)
 
     # Confusion Matrix
-    model = model_results[selected_model]
     y_pred = model.predict(X_test)
     cm = confusion_matrix(y_test, y_pred)
     cm_fig = ff.create_annotated_heatmap(
-        z=cm, x=["Predicted Non-Fraud", "Predicted Fraud"], y=["Actual Non-Fraud", "Actual Fraud"],
+        z=cm,
+        x=["Predicted Non-Fraud", "Predicted Fraud"],
+        y=["Actual Non-Fraud", "Actual Fraud"],
         colorscale='blues',
         showscale=False
     )
@@ -508,37 +527,40 @@ def update_model_performance_graphs(selected_model):
         title=f"Confusion Matrix ({selected_model})",
         xaxis_title="Predicted Class",
         yaxis_title="Actual Class",
-        height=450, 
+        height=450,
         margin=dict(t=50, b=50)
     )
-    
+    cm_fig.update_yaxes(autorange="reversed")
+
     # ROC Curve
+    roc_fig = go.Figure()
     if hasattr(model, "predict_proba"):
         probabilities = model.predict_proba(X_test)[:, 1]
-        fpr, tpr, _ = roc_curve(y_test, probabilities)
-        roc_fig = go.Figure(data=[
-            go.Scatter(x=fpr, y=tpr, mode='lines', name='ROC Curve'),
-            go.Scatter(x=[0, 1], y=[0, 1], mode='lines', line=dict(dash='dash'), name='Random Guess')
-        ])
-        roc_fig.update_layout(
-            title=f"ROC Curve ({selected_model})",
-            xaxis_title="False Positive Rate",
-            yaxis_title="True Positive Rate",
-            height=450,
-            margin=dict(t=50, b=50)
-        )
     else:
-        roc_fig = go.Figure(go.Scatter())
-        roc_fig.update_layout(title=f"ROC Curve Not Available for {selected_model}", height=450, margin=dict(t=50, b=50))
-    
-    return metrics_bar, cm_fig, roc_fig
+        # fallback for models without predict_proba
+        probabilities = model.decision_function(X_test)
+
+    fpr, tpr, _ = roc_curve(y_test, probabilities)
+    roc_auc = auc(fpr, tpr)
+
+    roc_fig.add_trace(go.Scatter(x=fpr, y=tpr, mode='lines', name=f'ROC Curve (AUC={roc_auc:.2f})'))
+    roc_fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode='lines', line=dict(dash='dash'), name='Random Guess'))
+    roc_fig.update_layout(
+        title=f"ROC Curve ({selected_model})",
+        xaxis_title="False Positive Rate",
+        yaxis_title="True Positive Rate",
+        height=450,
+        margin=dict(t=50, b=50)
+    )
+    return cm_fig, roc_fig
 
 @app.callback(
     Output("feature-importance-plot", "figure"),
     Input("feature-importance-model-dropdown", "value")
 )
 def update_feature_importance(selected_model):
-    model = model_results.get(selected_model)
+    model_path = f"models/{selected_model.replace(' ', '_')}.pkl"
+    model = joblib.load(model_path)
     
     if hasattr(model, 'feature_importances_'):
         feature_columns = X_test.columns
