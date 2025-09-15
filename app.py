@@ -313,8 +313,8 @@ analyze_tab = html.Div(
                             html.B("confusion matrix"), " results. The ",
                             html.B("XGBoost Classifier"), " had an accuracy of ",
                             html.B("99.15%"), " with ",
-                            html.B("173,997 true positives (TP)"), " and ",
-                            html.B("175,490 true negatives (TN)"), ", while only misclassifying ",
+                            html.B("175,490 true positives (TP)"), " and ",
+                            html.B("173,997 true negatives (TN)"), ", while only misclassifying ",
                             html.B("2236 transactions as false positives (FP)"), " and ",
                             html.B("743 as false negatives (FN)"), ". The ",
                             html.B("K-Neighbors Classifier"), " had an accuracy of ",
@@ -535,19 +535,43 @@ def update_model_metrics_bar(dummy):
     Input('model-selector-dropdown', 'value')
 )
 def update_confusion_matrix_roc(selected_model):
-    # Retrieve the model from memory, not from disk
     model = model_results[selected_model]
-
-    # Confusion Matrix
     y_pred = model.predict(X_test)
+    
+    # Get the raw confusion matrix from scikit-learn
+    # [[TN, FP],
+    #  [FN, TP]]
     cm = confusion_matrix(y_test, y_pred)
+    
+    # Extract values explicitly to avoid mix-ups
+    tn = cm[0, 0]
+    fp = cm[0, 1]
+    fn = cm[1, 0]
+    tp = cm[1, 1]
+    
+    # Reorder the matrix to display as [[TP, FN], [FP, TN]]
+    z_data = np.array([[tp, fn],
+                       [fp, tn]])
+
+    # Create the text annotations for each cell with labels
+    cm_text = np.array([
+        [f'TP: {tp}', f'FN: {fn}'],
+        [f'FP: {fp}', f'TN: {tn}']
+    ])
+    
+    # Create annotated heatmap
     cm_fig = ff.create_annotated_heatmap(
-        z=cm,
-        x=["Predicted Non-Fraud (0)", "Predicted Fraud (1)"],
-        y=["Actual Non-Fraud (0)", "Actual Fraud (1)"],
+        z=z_data,
+        x=["Predicted Fraud (1)", "Predicted Non-Fraud (0)"],
+        y=["Actual Fraud (1)", "Actual Non-Fraud (0)"],
+        annotation_text=cm_text,
         colorscale='blues',
         showscale=False
     )
+
+    # Reverse y-axis so the top row is Actual Fraud
+    cm_fig.update_yaxes(autorange='reversed')
+
     cm_fig.update_layout(
         title=f"Confusion Matrix ({selected_model})",
         xaxis_title="Predicted Class",
@@ -555,14 +579,15 @@ def update_confusion_matrix_roc(selected_model):
         height=450,
         margin=dict(t=50, b=50)
     )
-    cm_fig.update_yaxes(autorange="reversed")
-
+    
+    # Update font size of annotations
+    cm_fig.update_annotations(font_size=16)
+    
     # ROC Curve
     roc_fig = go.Figure()
     if hasattr(model, "predict_proba"):
         probabilities = model.predict_proba(X_test)[:, 1]
     else:
-        # fallback for models without predict_proba
         probabilities = model.decision_function(X_test)
 
     fpr, tpr, _ = roc_curve(y_test, probabilities)
@@ -577,6 +602,7 @@ def update_confusion_matrix_roc(selected_model):
         height=450,
         margin=dict(t=50, b=50)
     )
+    
     return cm_fig, roc_fig
 
 @app.callback(
