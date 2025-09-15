@@ -279,30 +279,12 @@ analyze_tab = html.Div(
                         
                         # New text section to describe model performance with numbers
                         html.P([
-                            "Our analysis shows that the ", html.B("XGBoost Classifier"), " performed the best, achieving a ", html.B("Precision of 0.99"), " a ", html.B("Recall of 0.99"), " an ", html.B("F1-Score of 0.99"), " and a ", html.B("ROC-AUC of 0.99"), 
-                            ". This demonstrates its superior ability to accurately identify fraudulent transactions with very few false negatives or false positives. The ", html.B("K-Neighbors Classifier"), " also performed exceptionally well, with a ", html.B("Precision of 0.98"), ", a ", html.B("Recall of 0.99"), ", an ", html.B("F1-Score of 0.99"), ", and a ", html.B("ROC-AUC of 0.99"), 
-                            ". The ", html.B("Random Forest Classifier"), " had a lower but still strong performance, with a ", html.B("Precision of 0.97"), ", a ", html.B("Recall of 0.99"), ", an ", html.B("F1-Score of 0.98"), ", and a ", html.B("ROC-AUC of 0.99"), ". The superior performance of XGBoost on all metrics makes it the most reliable model for this critical task."
+                            "Our analysis shows that the ", html.B("XGBoost Classifier"), " performed exceptionally well, achieving a ", html.B("Precision of 0.99"), ", a ", html.B("Recall of 0.99"), ", an ", html.B("F1-Score of 0.99"), ", and a ", html.B("ROC-AUC of 0.99"),
+                            ". These results, while incredibly strong, should be considered alongside the full confusion matrix for a complete view of model performance. The ", html.B("K-Neighbors Classifier"), " also performed exceptionally well, with a ", html.B("Precision of 0.98"), ", a ", html.B("Recall of 0.99"), ", an ", html.B("F1-Score of 0.99"), ", and a ", html.B("ROC-AUC of 0.99"),
+                            ". The ", html.B("Random Forest Classifier"), " had a lower but still strong performance, with a ", html.B("Precision of 0.97"), ", a ", html.B("Recall of 0.99"), ", an ", html.B("F1-Score of 0.98"), ", and a ", html.B("ROC-AUC of 0.99"), ". The superior performance of XGBoost on some key metrics makes it a leading contender, but the other models also present compelling results."
                         ]),
-                        html.P([
-                            "To provide a more granular view of each model's performance, we can look at the ",
-                            html.B("confusion matrix"), " results. The ",
-                            html.B("XGBoost Classifier"), " had ",
-                            html.B("173,997 true positives (TP)"), " and ",
-                            html.B("175,490 true negatives (TN)"), ", while only misclassifying ",
-                            html.B("2236 transactions as false positives (FP)"), " and ",
-                            html.B("743 as false negatives (FN)"), ". The ",
-                            html.B("K-Neighbors Classifier"), " had ",
-                            html.B("175,871 true positives (TP)"), " and ",
-                            html.B("171,999 true negatives (TN)"), ", with ",
-                            html.B("4234 false positives (FP)"), " and ",
-                            html.B("362 false negatives (FN)"), ". Lastly, the ",
-                            html.B("Random Forest Classifier"), " correctly identified ",
-                            html.B("175,154 true positives (TP)"), " and ",
-                            html.B("170,106 true negatives (TN)"), ", with ",
-                            html.B("6127 false positives (FP)"), " and ",
-                            html.B("1079 false negatives (FN)"), ". These numbers underscore the excellent balance each model achieves between catching fraud and avoiding false alarms."
-                        ]),
-                        html.H6("Confusion Matrix & ROC Curve", className="mt-4"),
+                        html.Hr(),
+                        html.H5("Confusion Matrix & ROC Curve", className="mt-4"),
                         html.P("Select a model to view its specific confusion matrix and ROC curve:"),
                         dcc.Dropdown(
                             id='model-selector-dropdown',
@@ -315,6 +297,39 @@ analyze_tab = html.Div(
                             dbc.Col(dcc.Graph(id="confusion-matrix"), md=6),
                             dbc.Col(dcc.Graph(id="roc-curve"), md=6),
                         ]),
+                        html.H6("Confusion Matrix", className="mt-4"),
+                        html.P(
+                            ["The confusion matrix is a table that breaks down our model's predictions into four categories:",
+                            html.Ul([
+                                html.Li([html.B("True Positives (TP):"), " Correctly predicted fraudulent payments."]),
+                                html.Li([html.B("True Negatives (TN):"), " Correctly predicted legitimate payments."]),
+                                html.Li([html.B("False Positives (FP):"), " Incorrectly predicted fraudulent payments (Type I error). These are legitimate transactions flagged as fraud, which can be an inconvenience to customers."]),
+                                html.Li([html.B("False Negatives (FN):"), " Incorrectly predicted legitimate payments (Type II error). These are fraudulent transactions that were missed by the model, representing a financial loss for the bank and a security risk for the customer."])
+                            ])
+                            ]
+                        ),
+                        html.P([
+                            "To provide a more granular view of each model's performance, we can look at the ",
+                            html.B("confusion matrix"), " results. The ",
+                            html.B("XGBoost Classifier"), " had an accuracy of ",
+                            html.B("99.15%"), " with ",
+                            html.B("173,997 true positives (TP)"), " and ",
+                            html.B("175,490 true negatives (TN)"), ", while only misclassifying ",
+                            html.B("2236 transactions as false positives (FP)"), " and ",
+                            html.B("743 as false negatives (FN)"), ". The ",
+                            html.B("K-Neighbors Classifier"), " had an accuracy of ",
+                            html.B("98.70%"), " with ",
+                            html.B("175,871 true positives (TP)"), " and ",
+                            html.B("171,999 true negatives (TN)"), ", with ",
+                            html.B("4234 false positives (FP)"), " and ",
+                            html.B("362 false negatives (FN)"), ". Lastly, the ",
+                            html.B("Random Forest Classifier"), " had an accuracy of ",
+                            html.B("97.96%"), " as it correctly identified ",
+                            html.B("175,154 true positives (TP)"), " and ",
+                            html.B("170,106 true negatives (TN)"), ", with ",
+                            html.B("6127 false positives (FP)"), " and ",
+                            html.B("1079 false negatives (FN)"), ". These numbers underscore the excellent balance each model achieves between catching fraud and avoiding false alarms."
+                        ]),
                         html.H6("Receiver Operating Characteristic (ROC) Curve", className="mt-4"),
                         html.P([
                             "The ROC curve plots the ",
@@ -325,16 +340,18 @@ analyze_tab = html.Div(
                         ]),
                         html.P([
                             "The ",
-                            html.B("XGBoost Classifier"),
-                            ", ",
                             html.B("Random Forest Classifier"),
-                            ", and ",
+                            " and ",
                             html.B("K-Neighbors Classifier"),
-                            " all achieved a perfect ROC curve with an ",
+                            " both achieved a perfect ROC curve with an ",
+                            html.B("AUC of 1.00"),
+                            ", while the ",
+                            html.B("XGBoost Classifier"),
+                            " was very close with an ",
                             html.B("AUC of 0.99"),
-                            ", demonstrating their excellent ability to differentiate between fraudulent and non-fraudulent transactions. ",
-                            "These high AUC values indicate that all models are highly effective at identifying fraud, with no single model significantly outperforming the others."
+                            ". These results demonstrate the models' excellent ability to differentiate between fraudulent and non-fraudulent transactions. All three models are highly effective at identifying fraud, with the Random Forest and K-Neighbors classifiers performing slightly better in this specific metric."
                         ]),
+                        html.Hr(),
                         html.H5("Feature Importance (for tree-based models)", className="mt-4"),
                         html.P("This plot ranks the features based on how much they contributed to the model's prediction."),
                         dcc.Dropdown(
@@ -526,8 +543,8 @@ def update_confusion_matrix_roc(selected_model):
     cm = confusion_matrix(y_test, y_pred)
     cm_fig = ff.create_annotated_heatmap(
         z=cm,
-        x=["Predicted Non-Fraud", "Predicted Fraud"],
-        y=["Actual Non-Fraud", "Actual Fraud"],
+        x=["Predicted Non-Fraud (0)", "Predicted Fraud (1)"],
+        y=["Actual Non-Fraud (0)", "Actual Fraud (1)"],
         colorscale='blues',
         showscale=False
     )
