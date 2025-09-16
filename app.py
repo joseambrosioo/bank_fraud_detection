@@ -140,7 +140,7 @@ prepare_tab = html.Div(
         dash_table.DataTable(
             id='table',
             columns=[
-                {"name": "age_group" if i == 'age' else i, "id": i, "type": "numeric" if i in ['step', 'amount', 'fraud'] else "text"}
+                {"name": "ageGroup" if i == 'age' else i, "id": i, "type": "numeric" if i in ['step', 'amount', 'fraud'] else "text"}
                 for i in data.columns
             ],
             data=data.head(10).to_dict('records'),
