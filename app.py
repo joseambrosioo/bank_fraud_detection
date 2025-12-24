@@ -331,26 +331,25 @@ tab_analyze = html.Div(
 
                         dbc.Row([
                             dbc.Col(dcc.Graph(id="bar-model-metrics"), md=6),
-                            dbc.Col(
+                            dbc.Col([ # <--- ADD THIS OPENING BRACKET
                                 html.P(
                                     ["To truly evaluate our fraud detection models, we focus on several key metrics beyond simple accuracy:",
                                     html.Ul([
-                                        html.Li([html.B("Precision:"), " Think of Precision as the cost of a false alarm. If our model flags a transaction as fraudulent, high precision means it is very likely to actually be fraudulent. Of all transactions flagged, how many were actually fraudulent? High precision is good for reducing unnecessary investigations."]),
-                                        html.Li([html.B("Recall (Sensitivity):"), " Think of Recall as the cost of a missed fraud. High recall means our model captures most actual fraudulent transactions. Of all fraudulent transactions, how many did our model successfully identify? High recall is crucial to avoid financial losses."]),
-                                        html.Li([html.B("F1-Score:"), " This is a balance between precision and recall, providing a single metric to compare models. It is the harmonic mean of precision and recall."]),
-                                        html.Li([html.B("ROC-AUC:"), " This powerful summary metric measures the model's ability to distinguish between fraudulent and non-fraudulent transactions. A score closer to 1.0 indicates the model can reliably separate the two classes."])
+                                        html.Li([html.B("Precision:"), " Think of Precision as the cost of a false alarm. If our model flags a transaction as fraudulent, high precision means it is very likely to actually be fraudulent."]),
+                                        html.Li([html.B("Recall (Sensitivity):"), " Think of Recall as the cost of a missed fraud. High recall means our model captures most actual fraudulent transactions."]),
+                                        html.Li([html.B("F1-Score:"), " This is a balance between precision and recall, providing a single metric to compare models."]),
+                                        html.Li([html.B("ROC-AUC:"), " Measures the model's ability to distinguish between fraudulent and non-fraudulent transactions."])
                                     ])
                                     ]
                                 ),
-                            )
+                                # Model performance text with numbers
+                                html.P([
+                                    "Our analysis shows that the ", html.B("XGBoost Classifier"), " performed exceptionally well, achieving a ", html.B("Precision of 0.99"), ", a ", html.B("Recall of 0.99"), ", an ", html.B("F1-Score of 0.99"), ", and an ", html.B("ROC-AUC of 0.99"),
+                                    ". The ", html.B("K-Neighbors Classifier"), " also performed well, while the ", html.B("Random Forest Classifier"), " had slightly lower but still strong performance."
+                                ]),
+                            ], md=6) # <--- ADD THIS CLOSING BRACKET
                         ]),
 
-                        # Model performance text with numbers
-                        html.P([
-                            "Our analysis shows that the ", html.B("XGBoost Classifier"), " performed exceptionally well, achieving a ", html.B("Precision of 0.99"), ", a ", html.B("Recall of 0.99"), ", an ", html.B("F1-Score of 0.99"), ", and an ", html.B("ROC-AUC of 0.99"),
-                            ". The ", html.B("K-Neighbors Classifier"), " also performed exceptionally well, with a ", html.B("Precision of 0.98"), ", ", html.B("Recall of 0.99"), ", ", html.B("F1-Score of 0.99"), ", and ", html.B("ROC-AUC of 0.99"),
-                            ". The ", html.B("Random Forest Classifier"), " had slightly lower but still strong performance, with a ", html.B("Precision of 0.97"), ", ", html.B("Recall of 0.99"), ", ", html.B("F1-Score of 0.98"), ", and ", html.B("ROC-AUC of 0.99"), "."
-                        ]),
                         html.Hr(),
                         html.H5("Confusion Matrix and ROC Curve", className="mt-4"),
                         html.P("Select a model to view its specific confusion matrix and ROC curve:"),
@@ -375,6 +374,28 @@ tab_analyze = html.Div(
                                     ])
                                     ]
                                 ),
+                                html.P([
+                                    "To provide a granular view, we look at the ",
+                                    html.B("confusion matrix"), " results. The ",
+                                    html.B("XGBoost Classifier"), " had an accuracy of ",
+                                    html.B("99.15%"), " with ",
+                                    html.B("175,490 true positives (TP)"), " and ",
+                                    html.B("173,997 true negatives (TN)"), ", while only misclassifying ",
+                                    html.B("2236 transactions as false positives (FP)"), " and ",
+                                    html.B("743 as false negatives (FN)"), ". The ",
+                                    html.B("K-Neighbors Classifier"), " had an accuracy of ",
+                                    html.B("98.70%"), " with ",
+                                    html.B("175,871 true positives (TP)"), " and ",
+                                    html.B("171,999 true negatives (TN)"), ", with ",
+                                    html.B("4234 false positives (FP)"), " and ",
+                                    html.B("362 false negatives (FN)"), ". Lastly, the ",
+                                    html.B("Random Forest Classifier"), " had an accuracy of ",
+                                    html.B("97.96%"), " as it correctly identified ",
+                                    html.B("175,154 true positives (TP)"), " and ",
+                                    html.B("170,106 true negatives (TN)"), ", with ",
+                                    html.B("6127 false positives (FP)"), " and ",
+                                    html.B("1079 false negatives (FN)"), ". These numbers underscore the excellent balance each model achieves between catching fraud and avoiding false alarms."
+                                ]),
                             ], md=6), # Add closing bracket here
                         ]),
                         dbc.Row([
@@ -389,28 +410,6 @@ tab_analyze = html.Div(
                                     ". The closer the curve is to the top-left corner, the better the model distinguishes between classes.",
                                 ]),
                             ], md=6), # Add closing bracket here
-                        ]),
-                        html.P([
-                            "To provide a granular view, we look at the ",
-                            html.B("confusion matrix"), " results. The ",
-                            html.B("XGBoost Classifier"), " had an accuracy of ",
-                            html.B("99.15%"), " with ",
-                            html.B("175,490 true positives (TP)"), " and ",
-                            html.B("173,997 true negatives (TN)"), ", while only misclassifying ",
-                            html.B("2236 transactions as false positives (FP)"), " and ",
-                            html.B("743 as false negatives (FN)"), ". The ",
-                            html.B("K-Neighbors Classifier"), " had an accuracy of ",
-                            html.B("98.70%"), " with ",
-                            html.B("175,871 true positives (TP)"), " and ",
-                            html.B("171,999 true negatives (TN)"), ", with ",
-                            html.B("4234 false positives (FP)"), " and ",
-                            html.B("362 false negatives (FN)"), ". Lastly, the ",
-                            html.B("Random Forest Classifier"), " had an accuracy of ",
-                            html.B("97.96%"), " as it correctly identified ",
-                            html.B("175,154 true positives (TP)"), " and ",
-                            html.B("170,106 true negatives (TN)"), ", with ",
-                            html.B("6127 false positives (FP)"), " and ",
-                            html.B("1079 false negatives (FN)"), ". These numbers underscore the excellent balance each model achieves between catching fraud and avoiding false alarms."
                         ]),
                         html.Hr(),
                         html.H5("Feature Importance (for tree-based models)", className="mt-4"),
