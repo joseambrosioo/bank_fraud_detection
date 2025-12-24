@@ -421,31 +421,48 @@ tab_analyze = html.Div(
                                 ]),
                             ], md=6), # Add closing bracket here
                         ]),
-                        dbc.Row([
-                            dbc.Col(dcc.Graph(id="roc-curve"), md=6),
-                            dbc.Col([ # Add opening bracket here
-                                html.H6("Receiver Operating Characteristic (ROC) Curve", className="mt-4"),
-                                html.P([
-                                    "The ROC curve plots the ",
-                                    html.B("True Positive Rate"),
-                                    " against the ",
-                                    html.B("False Positive Rate"),
-                                    ". The closer the curve is to the top-left corner, the better the model distinguishes between classes.",
-                                ]),
-                            ], md=6), # Add closing bracket here
-                        ]),
-                        html.Hr(),
-                        html.H5("Feature Importance (for tree-based models)", className="mt-4"),
-                        html.P("This graph ranks features based on their contribution to the model's prediction."),
-                        dcc.Dropdown(
-                            id="dropdown-feature-importance",
-                            options=[
-                                {'label': 'Random Forest Classifier', 'value': 'Random Forest Classifier'},
-                                {'label': 'XGBoost Classifier', 'value': 'XGBoost Classifier'}
-                            ],
-                            value='XGBoost Classifier'
-                        ),
-                        dcc.Graph(id="graph-feature-importance"),
+dbc.Row([
+                            # LEFT COLUMN: ROC Curve and its description
+                            dbc.Col([
+                                dcc.Graph(
+                                    id="roc-curve", 
+                                    style={"height": "400px"} # Control CSS height
+                                ), 
+                                html.Div([
+                                    html.H6("Receiver Operating Characteristic (ROC) Curve", className="mt-2"),
+                                    html.P([
+                                        "The ROC curve plots the ",
+                                        html.B("True Positive Rate"),
+                                        " against the ",
+                                        html.B("False Positive Rate"),
+                                        ". The closer the curve is to the top-left corner, the better the model distinguishes between classes.",
+                                    ], style={"font-size": "0.9rem"}),
+                                ], style={"height": "100px", "overflow": "hidden"}), # Reserve space for text
+                            ], md=6),
+
+                            # RIGHT COLUMN: Feature Importance dropdown and its graph
+                            dbc.Col([ 
+                                html.Div([
+                                    html.H5("Feature Importance", className="mt-0"),
+                                    dcc.Dropdown(
+                                        id="dropdown-feature-importance",
+                                        options=[
+                                            {'label': 'Random Forest Classifier', 'value': 'Random Forest Classifier'},
+                                            {'label': 'XGBoost Classifier', 'value': 'XGBoost Classifier'}
+                                        ],
+                                        value='XGBoost Classifier',
+                                        clearable=False,
+                                        className="mb-2"
+                                    ),
+                                    html.P("Ranks features based on contribution to predictions.", className="small text-muted"),
+                                ], style={"height": "100px"}), # Match the height of the left text box
+                                dcc.Graph(
+                                    id="graph-feature-importance",
+                                    style={"height": "400px"} # Control CSS height
+                                ),
+                            ], md=6),
+                        ], className="mt-4 g-4"), # g-4 adds a nice gutter gap
+
                     ], className="p-4"
                 )
             ]), 
@@ -1284,12 +1301,13 @@ def update_confusion_matrix_roc(selected_model):
 
     fig_roc.add_trace(go.Scatter(x=fpr, y=tpr, mode='lines', name=f'ROC Curve (AUC={roc_auc:.2f})'))
     fig_roc.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode='lines', line=dict(dash='dash'), name='Random Guess'))
+    # Inside the ROC layout section of that callback:
     fig_roc.update_layout(
         title=f"ROC Curve ({selected_model})",
         xaxis_title="False Positive Rate",
         yaxis_title="True Positive Rate",
-        height=450,
-        margin=dict(t=50, b=50)
+        height=400, # MATCH THIS TO THE CSS HEIGHT
+        margin=dict(t=30, b=30, l=30, r=30)
     )
     
     return fig_cm, fig_roc
@@ -1314,12 +1332,13 @@ def update_feature_importance(selected_model):
             y=df_importance['feature'],
             orientation='h'
         ))
+        # Inside the importance layout section:
         fig.update_layout(
-            title=f"Feature Importance for {selected_model}",
+            title=f"Feature Importance",
             xaxis_title="Importance",
             yaxis_title="Feature",
-            height=500,
-            margin=dict(l=150, t=50, b=50)
+            height=400, # MATCH THIS TO THE CSS HEIGHT
+            margin=dict(l=100, t=30, b=30, r=30)
         )
         return fig
     else:
