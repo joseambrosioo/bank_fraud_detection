@@ -63,6 +63,21 @@ print("Metrics calculated successfully.")
 
 y = data['fraud']
 
+# --- 1. Automate the Feature List logic ---
+# This creates a data dictionary for all features in the Banksim dataset
+full_feature_list = pd.DataFrame({
+    "Feature Name": X_test.columns,
+    "Data Type": [str(X_test[col].dtype) for col in X_test.columns],
+    "Example Value": [X_test[col].iloc[0] for col in X_test.columns],
+    "Business Category": [
+        "Risk Target" if "fraud" in col.lower() else 
+        "Financial Metric" if "amount" in col.lower() else 
+        "Temporal Factor" if "step" in col.lower() else 
+        "Demographic" if any(x in col.lower() for x in ["age", "gender"]) else 
+        "Transaction Context" for col in X_test.columns
+    ]
+})
+
 # --- Dashboard Layout ---
 app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], suppress_callback_exceptions=True)
 app.title = "Bank Payment Fraud Detection"
@@ -130,67 +145,70 @@ tab_ask = html.Div([
 # 2. Tab: PREPARE
 tab_prepare = html.Div(
     children=[
-        html.H4(["📝 ", html.B("PREPARE"), " — Preparing the Data"], className="mt-4"),
-        html.P("Before building a predictive model, we need to understand and prepare our data."),
-        html.H5("Data Source"),
-        html.P([
-            "We are using the ",
-            html.B("Banksim dataset"),
-            ", a synthetically generated dataset that simulates bank payments. It contains nearly 600,000 transactions with various features."
+        html.Div([
+            html.H4(["📝 ", html.B("PREPARE"), " — Data Integration & Class Balancing"], className="mt-4"),
+            html.P("Transforming raw Banksim simulation logs into a balanced dataset for high-precision fraud detection."),
+        ], className="p-4 bg-light border-bottom mb-4"),
+        
+        dbc.Row([
+            dbc.Col(
+                dbc.Card([
+                    dbc.CardHeader("Final Merged Dataset Summary"),
+                    dbc.CardBody([
+                        html.P(f"Total Transactions: {data.shape[0]:,}", className="mb-1"),
+                        html.P(f"Total Features: {X_test.shape[1]}", className="mb-1"),
+                        html.P(f"Fraud Prevalence: {(y.mean()*100):.2f}%", className="mb-1"),
+                    ]),
+                ], className="mb-4 shadow-sm"),
+            ),
+            dbc.Col(
+                dbc.Card([
+                    dbc.CardHeader("Handling Imbalance"),
+                    dbc.CardBody([
+                        html.P([html.B("SMOTE Applied:"), " Synthetic samples were generated for the minority fraud class to prevent model bias toward majority 'legitimate' transactions."]),
+                    ]),
+                ], className="mb-4 shadow-sm"),
+            ),
         ]),
-        dbc.Row(
-            [
-                dbc.Col(
-                    dbc.Card(
-                        [
-                            dbc.CardHeader("Dataset Summary"),
-                            dbc.CardBody(
-                                [
-                                    html.P(f"Total Transactions: {data.shape[0]}"),
-                                    html.P(f"Features: {data.shape[1]}"),
-                                    html.P(f"Normal Transactions: {y.value_counts()[0]}"),
-                                    html.P(f"Fraudulent Transactions: {y.value_counts()[1]}"),
-                                ]
-                            ),
-                        ], className="mb-3"
-                    )
-                ),
-                dbc.Col(
-                    dbc.Card(
-                        [
-                            dbc.CardHeader("Unbalanced Data Issue"),
-                            dbc.CardBody(
-                                [
-                                    html.P([
-                                        "As is common in fraud data, the dataset is highly ",
-                                        html.B("unbalanced"),
-                                        ". Only a small fraction of all transactions are fraudulent."
-                                    ]),
-                                    html.P([
-                                        "To resolve this, we use a technique called ",
-                                        html.B("SMOTE (Synthetic Minority Over-sampling Technique)"),
-                                        ". Instead of just copying fraud examples, SMOTE intelligently creates new synthetic fraud data points that are similar to existing ones, helping our models learn more effectively."
-                                    ]),
-                                ]
-                            ),
-                        ], className="mb-3"
-                    )
-                ),
-            ]
+        
+        html.Div([
+            html.H5("Comprehensive Data Dictionary", className="d-inline"),
+            dbc.Button(
+                "📥 Export Dictionary (CSV)", 
+                id="btn-download-dict", 
+                color="secondary", 
+                size="sm", 
+                className="ms-3 mb-2",
+                outline=True
+            ),
+            dcc.Download(id="download-feature-dict")
+        ]),
+        
+        # Searchable and Sortable Data Dictionary Table
+        dash_table.DataTable(
+            id='feature-dictionary-table',
+            columns=[{"name": i, "id": i} for i in full_feature_list.columns],
+            data=full_feature_list.to_dict('records'),
+            filter_action="native",
+            sort_action="native",
+            page_size=10,
+            style_table={'overflowX': 'auto', 'width': '100%'},
+            style_header={
+                'backgroundColor': 'rgb(230, 230, 230)',
+                'fontWeight': 'bold',
+                'textAlign': 'center',
+            },
+            style_cell={
+                'textAlign': 'left',
+                'padding': '10px',
+                'font-size': '12px',
+                'minWidth': '100px', 'width': 'auto', 'maxWidth': '200px',
+                'overflow': 'hidden',
+                'textOverflow': 'ellipsis',
+            },
         ),
-        html.H5("Feature Descriptions"),
-        dcc.Markdown(
-            """
-            The dataset includes the following main features:
-            - **Step**: The simulation day, from 0 to 180 (6 months).
-            - **Customer** and **Merchant**: Anonymized IDs for the customer and merchant.
-            - **Age** and **Gender**: Demographic information, categorized into groups.
-            - **Category**: The type of purchase (e.g., 'es_travel', 'es_health').
-            - **Amount**: The transaction value.
-            - **Fraud**: Our target variable. 1 means fraudulent, 0 means non-fraudulent.
-            """, className="p-4"
-        ),
-        html.H5("Dataset Sample (First 10 Rows)"),
+
+        html.H5("Dataset Sample (First 10 Rows)", className="mt-4"),
         dash_table.DataTable(
             id='table',
             columns=[
@@ -223,8 +241,11 @@ tab_prepare = html.Div(
 # 3. Tab: ANALYZE
 tab_analyze = html.Div(
     children=[
-        html.H4(["📈 ", html.B("ANALYZE"), " — Finding Patterns and Building Models"], className="mt-4"),
-        html.P("This is where we explore the data to find patterns and build the predictive brain of our dashboard."),
+        html.Div([
+            html.H4(["📈 ", html.B("ANALYZE"), " — Finding Patterns and Building Models"], className="mt-4"),
+            html.P("This is where we explore the data to find patterns and build the predictive brain of our dashboard."),
+        ], className="p-4 bg-light border-bottom mb-4"),
+
         dbc.Tabs([
             dbc.Tab(label="Exploratory Data Analysis", children=[
                 html.Div(
@@ -249,6 +270,8 @@ tab_analyze = html.Div(
                             html.B("Histogram Insight:"),
                             " This graph clearly shows the imbalance in the data. There are far fewer fraudulent transactions, but they are concentrated at much higher values, while benign transactions are low-value and very frequent. This is a classic pattern in fraud detection and confirms our hypothesis."
                         ]),
+
+                        html.Hr(),
                         html.H5("Fraud by Category and Age Group", className="mt-4"),
                         html.P("We also explored how fraud is distributed across different purchase categories and age groups."),
                         
@@ -1087,6 +1110,14 @@ def download_local_fraud_audit(n_clicks, cust_idx, model_name, result_text):
 
     return dcc.send_bytes(pdf.output(dest='S').encode('latin-1'), f"Fraud_Audit_TX_{cust_idx}.pdf")
 
+@app.callback(
+    Output("download-feature-dict", "data"),
+    Input("btn-download-dict", "n_clicks"),
+    prevent_initial_call=True,
+)
+def download_fraud_dictionary(n_clicks):
+    return dcc.send_data_frame(full_feature_list.to_csv, "Banksim_Fraud_Data_Dictionary.csv", index=False)
+    
 @app.callback(
     Output("boxplot-amount", "figure"),
     Input("histogram-amount", "id") # Dummy input to trigger on load
