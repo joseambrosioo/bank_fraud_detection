@@ -24,10 +24,22 @@ import urllib.parse
 from datetime import datetime
 
 # --- Data Loading (Loads all data and models ONCE at startup) ---
+# try:
+#     data = pd.read_csv('dataset/bs140513_032310.csv')
+#     X_test_raw = joblib.load('data/X_test.pkl')
+#     y_test = joblib.load('data/y_test.pkl')
+#     feature_columns = joblib.load('data/feature_columns.pkl')
+#     X_test = pd.DataFrame(X_test_raw, columns=feature_columns)
+
+# Instead of loading everything, limit the rows for the dashboard
 try:
-    data = pd.read_csv('dataset/bs140513_032310.csv')
+    data = pd.read_csv('dataset/bs140513_032310.csv').sample(10000)
     X_test_raw = joblib.load('data/X_test.pkl')
-    y_test = joblib.load('data/y_test.pkl')
+    # Slice first
+    X_test_raw = X_test_raw[:5000] 
+    y_test = joblib.load('data/y_test.pkl')[:5000]
+    
+    # ADD THIS LINE: Convert to DataFrame so .columns works later
     feature_columns = joblib.load('data/feature_columns.pkl')
     X_test = pd.DataFrame(X_test_raw, columns=feature_columns)
     
@@ -940,11 +952,18 @@ def manage_history(n_save, n_clear, current_data, amt, step, gauge_fig):
 
     if button_id == "n_save" or button_id == "btn-save-scenario":
         score = gauge_fig['data'][0]['value']
+        # new_entry = {
+        #     "name": f"Scenario {len(current_data) + 1}",
+        #     "score": f"{score:.1f}%",
+        #     "amount": f"${amt:,.0f}",
+        #     "step": f"Day {step}"
+        # }
+        # In your simulator or history callbacks:
         new_entry = {
             "name": f"Scenario {len(current_data) + 1}",
-            "score": f"{score:.1f}%",
-            "amount": f"${amt:,.0f}",
-            "step": f"Day {step}"
+            "score": float(score), # Ensure it's a native float, not np.float64
+            "amount": float(amt), 
+            "step": int(step)
         }
         current_data.append(new_entry)
         return current_data, current_data # Return to BOTH table and store
@@ -1141,15 +1160,23 @@ def download_fraud_dictionary(n_clicks):
     Output("boxplot-amount", "figure"),
     Input("histogram-amount", "id") # Dummy input to trigger on load
 )
+# def update_boxplot_amount(dummy):
+#     fig = go.Figure()
+#     for category in data['category'].unique():
+#         df_cat = data[data['category'] == category]
+#         fig.add_trace(go.Box(
+#             y=df_cat['amount'],
+#             name=category,
+#         ))
+
 def update_boxplot_amount(dummy):
+    # Sample the data to 1000 points per category for the box plot
+    sampled_data = data.groupby('category').apply(lambda x: x.sample(min(len(x), 500))).reset_index(drop=True)
     fig = go.Figure()
-    for category in data['category'].unique():
-        df_cat = data[data['category'] == category]
-        fig.add_trace(go.Box(
-            y=df_cat['amount'],
-            name=category,
-        ))
-    
+    for category in sampled_data['category'].unique():
+        df_cat = sampled_data[sampled_data['category'] == category]
+        fig.add_trace(go.Box(y=df_cat['amount'], name=category))
+
     fig.update_layout(
         title="Transaction Amount by Category",
         yaxis_title="Amount",
