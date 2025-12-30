@@ -216,7 +216,7 @@ tab_prepare = html.Div(
                 for i in data.columns
             ],
             data=data.head(10).to_dict('records'),
-            sort_action="native",
+            sort_action="native",std = joblib.load('data/scaler.pkl')
             filter_action="native",
             page_action="none",
             style_table={'overflowX': 'auto', 'width': '100%'},
@@ -469,6 +469,7 @@ dbc.Row([
         ])
     ]
 )
+
 tab_explain = html.Div(
     children=[
         html.Div([
