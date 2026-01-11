@@ -714,7 +714,7 @@ app.layout = dbc.Container([
         dbc.Tab(tab_explain, label="Explain", tab_id="tab-explain"), # IDs inside tab_explain now exist
         dbc.Tab(tab_simulate, label="Simulate", tab_id="tab-simulate"),
         dbc.Tab(tab_act, label="Act", tab_id="tab-act"),
-    ], id="main-tabs", active_tab="tab-ask"),
+    ], id="main-tabs", active_tab="tab-simulate"),
     dcc.Store(id="sim-store-p1", data=[])
 ], fluid=True)
 
