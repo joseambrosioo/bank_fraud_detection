@@ -251,7 +251,6 @@ tab_prepare = html.Div(
 )
 
 # 3. Tab: ANALYZE
-# 3. Tab: ANALYZE
 tab_analyze = html.Div(
     children=[
         html.Div([
@@ -704,7 +703,6 @@ tab_act = html.Div([
 ])
 
 # --- Updated Layout ---
-# --- Updated Layout ---
 app.layout = dbc.Container([
     header,
     dbc.Tabs([
@@ -821,7 +819,24 @@ def generate_fraud_compliance_report(n_clicks, selected_model):
     pdf.cell(0, 10, f"Report ID: {report_id}", ln=True, align='C')
     pdf.cell(0, 5, "This document contains proprietary algorithmic insights. Unauthorized distribution is prohibited.", ln=True, align='C')
 
-    return dcc.send_bytes(pdf.output(dest='S').encode('latin-1'), f"Fraud_Compliance_Report_{m_code}.pdf")
+    # return dcc.send_bytes(pdf.output(dest='S').encode('latin-1'), f"Fraud_Compliance_Report_{m_code}.pdf")
+    
+    # pdf2 returns a bytearray by default when no dest is provided
+    pdf_output = pdf.output() 
+    
+    # 1. Output as a string
+    pdf_str = pdf.output(dest='S')
+    
+    # 2. Convert that string into actual bytes (The missing step!)
+    pdf_bytes = bytes(pdf_str, 'latin-1')
+
+    # 3. Define the writer using the bytes
+    def write_pdf(bytes_io):
+        bytes_io.write(pdf_bytes)
+
+    # 4. Send to browser
+    return dcc.send_bytes(write_pdf, f"Fraud_Compliance_Report_{m_code}.pdf")
+    
 
 # --- NEW: EMAIL CALLBACK ---
 @app.callback(
@@ -1146,7 +1161,21 @@ def download_local_fraud_audit(n_clicks, cust_idx, model_name, result_text):
     pdf.ln(10); pdf.set_font("Arial", 'I', 8); pdf.set_text_color(150, 150, 150)
     pdf.cell(0, 10, f"Report ID: {report_id} | Proprietary Fraud Detection Insight", ln=True, align='C')
 
-    return dcc.send_bytes(pdf.output(dest='S').encode('latin-1'), f"Fraud_Audit_TX_{cust_idx}.pdf")
+    # return dcc.send_bytes(pdf.output(dest='S').encode('latin-1'), f"Fraud_Audit_TX_{cust_idx}.pdf")
+
+    # 1. Output as a string
+    pdf_str = pdf.output(dest='S')
+    
+    # 2. Convert that string into actual bytes (The missing step!)
+    pdf_bytes = bytes(pdf_str, 'latin-1')
+
+    # 3. Define the writer using the bytes
+    def write_pdf(bytes_io):
+        bytes_io.write(pdf_bytes)
+
+    # 4. Send to browser
+    return dcc.send_bytes(write_pdf, f"Fraud_Audit_TX_{cust_idx}.pdf")
+    
 
 @app.callback(
     Output("download-feature-dict", "data"),
