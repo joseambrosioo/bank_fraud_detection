@@ -824,17 +824,15 @@ def generate_fraud_compliance_report(n_clicks, selected_model):
     # pdf2 returns a bytearray by default when no dest is provided
     pdf_output = pdf.output() 
     
-    # 1. Output as a string
-    pdf_str = pdf.output(dest='S')
+    # Captura a saída. Se for fpdf2, output() já pode retornar bytes.
+    raw_pdf = pdf.output()
     
-    # 2. Convert that string into actual bytes (The missing step!)
-    pdf_bytes = bytes(pdf_str, 'latin-1')
+    # Se raw_pdf for string, converte. Se já for bytes/bytearray, mantém.
+    pdf_bytes = raw_pdf if isinstance(raw_pdf, (bytes, bytearray)) else bytes(raw_pdf, 'latin-1')
 
-    # 3. Define the writer using the bytes
     def write_pdf(bytes_io):
         bytes_io.write(pdf_bytes)
 
-    # 4. Send to browser
     return dcc.send_bytes(write_pdf, f"Fraud_Compliance_Report_{m_code}.pdf")
     
 
@@ -1163,17 +1161,15 @@ def download_local_fraud_audit(n_clicks, cust_idx, model_name, result_text):
 
     # return dcc.send_bytes(pdf.output(dest='S').encode('latin-1'), f"Fraud_Audit_TX_{cust_idx}.pdf")
 
-    # 1. Output as a string
-    pdf_str = pdf.output(dest='S')
+    # Captura a saída. Se for fpdf2, output() já pode retornar bytes.
+    raw_pdf = pdf.output()
     
-    # 2. Convert that string into actual bytes (The missing step!)
-    pdf_bytes = bytes(pdf_str, 'latin-1')
+    # Se raw_pdf for string, converte. Se já for bytes/bytearray, mantém.
+    pdf_bytes = raw_pdf if isinstance(raw_pdf, (bytes, bytearray)) else bytes(raw_pdf, 'latin-1')
 
-    # 3. Define the writer using the bytes
     def write_pdf(bytes_io):
         bytes_io.write(pdf_bytes)
 
-    # 4. Send to browser
     return dcc.send_bytes(write_pdf, f"Fraud_Audit_TX_{cust_idx}.pdf")
     
 
