@@ -23,6 +23,13 @@ import io
 import urllib.parse
 from datetime import datetime
 
+# 🔥 Warmup once when app starts
+pdf = FPDF()
+pdf.add_page()
+pdf.set_font("Arial", size=12)
+pdf.cell(200, 10, "Warmup", ln=True)
+pdf.output(dest='S')
+
 # --- Data Loading (Loads all data and models ONCE at startup) ---
 # try:
 #     data = pd.read_csv('dataset/bs140513_032310.csv')
@@ -822,18 +829,15 @@ def generate_fraud_compliance_report(n_clicks, selected_model):
     # return dcc.send_bytes(pdf.output(dest='S').encode('latin-1'), f"Fraud_Compliance_Report_{m_code}.pdf")
     
     # pdf2 returns a bytearray by default when no dest is provided
-    pdf_output = pdf.output() 
-    
-    # Captura a saída. Se for fpdf2, output() já pode retornar bytes.
-    raw_pdf = pdf.output()
-    
-    # Se raw_pdf for string, converte. Se já for bytes/bytearray, mantém.
-    pdf_bytes = raw_pdf if isinstance(raw_pdf, (bytes, bytearray)) else bytes(raw_pdf, 'latin-1')
+    pdf_data = pdf.output(dest='S')
 
-    def write_pdf(bytes_io):
-        bytes_io.write(pdf_bytes)
+    pdf_bytes = (
+        pdf_data.encode("latin-1")
+        if isinstance(pdf_data, str)
+        else bytes(pdf_data)
+    )
 
-    return dcc.send_bytes(write_pdf, f"Fraud_Compliance_Report_{m_code}.pdf")
+    return dcc.send_bytes(pdf_bytes, f"Fraud_Model_Validation_Report_{m_code}.pdf")
     
 
 # --- NEW: EMAIL CALLBACK ---
@@ -1161,16 +1165,16 @@ def download_local_fraud_audit(n_clicks, cust_idx, model_name, result_text):
 
     # return dcc.send_bytes(pdf.output(dest='S').encode('latin-1'), f"Fraud_Audit_TX_{cust_idx}.pdf")
 
-    # Captura a saída. Se for fpdf2, output() já pode retornar bytes.
-    raw_pdf = pdf.output()
-    
-    # Se raw_pdf for string, converte. Se já for bytes/bytearray, mantém.
-    pdf_bytes = raw_pdf if isinstance(raw_pdf, (bytes, bytearray)) else bytes(raw_pdf, 'latin-1')
+    # pdf2 returns a bytearray by default when no dest is provided
+    pdf_data = pdf.output(dest='S')
 
-    def write_pdf(bytes_io):
-        bytes_io.write(pdf_bytes)
+    pdf_bytes = (
+        pdf_data.encode("latin-1")
+        if isinstance(pdf_data, str)
+        else bytes(pdf_data)
+    )
 
-    return dcc.send_bytes(write_pdf, f"Fraud_Audit_TX_{cust_idx}.pdf")
+    return dcc.send_bytes(pdf_bytes, f"Fraud_Investigation_Case_Report_TX_{cust_idx}.pdf")
     
 
 @app.callback(
